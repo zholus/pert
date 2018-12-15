@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PERT</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+
+    <style>
+        td {
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <main class="col-12 py-md-3 bd-content">
+        <form>
+            <div class="form-group">
+                <label for="activity">Activity</label>
+                <input type="text" autofocus class="form-control" id="activity" placeholder="Activity">
+            </div>
+            <div class="form-group">
+                <label for="opt">Opt. (<i>o</i>)</label>
+                <input type="text" class="form-control" id="opt" placeholder="Opt. (o)">
+            </div>
+            <div class="form-group">
+                <label for="normal">Normal. (<i>m</i>)</label>
+                <input type="text" class="form-control" id="normal" placeholder="Normal. (m)">
+            </div>
+            <div class="form-group">
+                <label for="pess">Pess. (<i>p</i>)</label>
+                <input type="text" class="form-control" id="pess" placeholder="Pess. (p)">
+            </div>
+            <button type="submit" class="btn btn-primary" id="new_position">Add new position</button>
+        </form>
+
+        <section class="my-md-3">
+            Expected time sum: <span id="expected_time_sum">0</span>
+        </section>
+
+        <table class="table table-bordered my-md-3">
+            <colgroup>
+                <col width="400">
+                <col>
+                <col>
+                <col>
+                <col>
+            </colgroup>
+            <tbody id="tbody">
+                <tr>
+                    <th rowspan="2">Activity</th>
+                    <th colspan="3">Time estimates</th>
+                    <th rowspan="2">Expected time</th>
+                </tr>
+                <tr>
+                    <th>Opt. (<i>o</i>)</th>
+                    <th>Normal (<i>m</i>)</th>
+                    <th>Pess. (<i>p</i>)</th>
+                </tr>
+            </tbody>
+        </table>
+    </main>
+
+    <script>
+        $(document).ready(function () {
+            var inputs = [
+                'activity', 'opt', 'normal', 'pess'
+            ];
+
+            var template = "\n" +
+                "                <tr data-row-count='%row_count%'>\n" +
+                "                    <td data-row-activity><i>%activity%</i></td>\n" +
+                "                    <td data-row-opt>%opt%</td>\n" +
+                "                    <td data-row-normal>%normal%</td>\n" +
+                "                    <td data-row-pess>%pess%</td>\n" +
+                "                    <td data-row-expected_time>%expected_time%</td>\n" +
+                "                </tr>";
+            $("#new_position").on('click', function (e) {
+                e.preventDefault();
+
+                addNewPosition();
+
+                calculateExpectedTimeSum();
+            });
+
+            function calculateExpectedTimeSum()
+            {
+                var sum = 0;
+
+                if ($('[data-row-expected_time]').length > 0) {
+                    $('[data-row-expected_time]').each(function (k, i) {
+                        var time = parseFloat($(i).text());
+
+                        sum += time;
+                    });
+                }
+
+                $("#expected_time_sum").html(sum);
+            }
+
+            function addNewPosition()
+            {
+                if (inputFilled()) {
+                    $("#tbody").append(
+                        fillTemplate(template, getLastRow() + 1)
+                    );
+                }
+            }
+
+            function inputFilled()
+            {
+                var filled = true;
+
+                for (input in inputs) {
+                    if ($("#" + inputs[input]).val().length === 0) {
+                        filled = false;
+                    }
+                }
+
+                return filled;
+            }
+
+            function getLastRow()
+            {
+                if ($('[data-row-count]').length > 0) {
+                    return $('[data-row-count]').last().data('row-count')
+                }
+
+                return 0;
+            }
+
+            function calculateExpectedTime(opt, normal, pess)
+            {
+                opt = parseFloat(opt);
+                normal = parseFloat(normal);
+                pess = parseFloat(pess);
+
+                return parseFloat((opt + (4 * normal) + pess) / 6).toFixed(2);
+            }
+
+            function fillTemplate(template, row)
+            {
+                for (input in inputs) {
+                    input = inputs[input];
+
+                    template = template.replace('%' + input + '%', $("#" + input).val());
+                }
+
+                var expected_time = calculateExpectedTime(
+                    $("#opt").val(),
+                    $("#normal").val(),
+                    $("#pess").val()
+                );
+
+                template = template.replace('%row_count%', row);
+                template = template.replace('%expected_time%', expected_time);
+
+                return template;
+            }
+        });
+    </script>
+</body>
+</html>
